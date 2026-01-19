@@ -1,21 +1,43 @@
 trigger:
 - none
 
-pool: agent1_pool
+pool:
+  name: agent1_pool
 
 steps:
+# 1️⃣ Checkout source code
 - checkout: self
+  displayName: 'Checkout Source Code'
 
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    goals: 'clean package'
-    options: '-DskipTests'
-  displayName: 'Maven Build'
-
+# 2️⃣ Verify Java (from your PC)
 - script: |
-    echo Java version:
+    echo ======================
+    echo Java Version Check
+    echo ======================
     java -version
-    echo Running application
+  displayName: 'Verify Java'
+
+# 3️⃣ Verify Maven (from your PC)
+- script: |
+    echo ======================
+    echo Maven Version Check
+    echo ======================
+    D:\minikube\apache-maven-3.9.12\bin\mvn.cmd -version
+  displayName: 'Verify Maven'
+
+# 4️⃣ Build project using LOCAL Maven (OFFLINE)
+- script: |
+    echo ======================
+    echo Offline Maven Build
+    echo ======================
+    D:\minikube\apache-maven-3.9.12\bin\mvn.cmd -o clean package -DskipTests
+  displayName: 'Offline Maven Build'
+
+# 5️⃣ Run the JAR
+- script: |
+    echo ======================
+    echo Running Application
+    echo ======================
+    dir target
     java -jar target/netflixclone-1.0.jar
   displayName: 'Run Application'
