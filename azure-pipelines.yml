@@ -4,42 +4,91 @@ trigger:
 pool:
   name: agent1_pool
 
-steps:
-# 1️⃣ Checkout source code
-- checkout: self
-  displayName: 'Checkout Source Code'
+stages:
+- stage: build_jar
+  jobs:
+  - job: "build_job"
+    displayName: "jobbb"
+    steps:
+    # 1️⃣ Checkout source code
+    - checkout: self
+      displayName: 'Checkout Source Code'
 
-# 2️⃣ Verify Java (from your PC)
-- script: |
-    echo ======================
-    echo Java Version Check
-    echo ======================
-    java -version
-  displayName: 'Verify Java'
+    # 2️⃣ Verify Java (from your PC)
+    - script: |
+        echo ======================
+        echo Java Version Check
+        echo ======================
+        java -version
+      displayName: 'Verify Java'
 
-# 3️⃣ Verify Maven (from your PC)
-- script: |
-    echo ======================
-    echo Maven Version Check
-    echo ======================
-    D:\minikube\apache-maven-3.9.12\bin\mvn.cmd -version
-  displayName: 'Verify Maven'
+    # 3️⃣ Verify Maven (from your PC)
+    - script: |
+        echo ======================
+        echo Maven Version Check
+        echo ======================
+        D:\minikube\apache-maven-3.9.12\bin\mvn.cmd -version
+      displayName: 'Verify Maven'
 
-# 4️⃣ Build project using LOCAL Maven (OFFLINE)
-- script: |
-    echo ======================
-    echo Offline Maven Build
-    echo ======================
-    D:\minikube\apache-maven-3.9.12\bin\mvn.cmd -o clean package -DskipTests
-  displayName: 'Offline Maven Build'
+    # 4️⃣ Build project using LOCAL Maven (OFFLINE)
+    - script: |
+        echo ======================
+        echo Offline Maven Build
+        echo ======================
+        D:\minikube\apache-maven-3.9.12\bin\mvn.cmd -o clean package -DskipTests
+      displayName: 'Offline Maven Build'
 
-# 5️⃣ Run the JAR
-- script: |
-    echo ======================
-    echo Running Application
-    echo ======================
-    dir target
-    java -jar target/netflixclone-1.0.jar
-  displayName: 'Run Application'
-  env:
-    CI: true
+    # 5️⃣ Run the JAR
+    - script: |
+        echo ======================
+        echo Running Application
+        echo ======================
+        dir target
+        java -jar target/netflixclone-1.0.jar
+      displayName: 'Run Application'
+      env:
+        CI: true
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/target'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+
+# =========================
+# CD STAGE – DEPLOY TO TOMCAT
+# =========================
+- stage: CD
+  displayName: "Deploy JAR to Linux Server"
+  dependsOn: build_jar
+  jobs:
+  - job: DeployJAR
+    displayName: "Deploy JAR"
+    steps:
+
+    - task: DownloadPipelineArtifact@2
+      displayName: "Download JAR Artifact"
+      inputs:
+        artifact: 'jar-drop'
+        path: '$(System.DefaultWorkingDirectory)/deploy'
+
+    - task: CopyFilesOverSSH@0
+      displayName: "Copy JAR to Linux Server"
+      inputs:
+        sshEndpoint: 'ssh_ado'
+        sourceFolder: '$(System.DefaultWorkingDirectory)/deploy'
+        contents: '*.jar'
+        targetFolder: '/home/vinodadmin/java-app'
+        cleanTargetFolder: true
+        readyTimeout: '20000'
+
+    - task: SSH@0
+      displayName: "Run Java Application"
+      inputs:
+        sshEndpoint: 'ssh_ado'
+        runOptions: 'commands'
+        commands: |
+          pkill -f netflixclone || true
+          nohup java -jar /home/vinodadmin/java-app/netflixclone-1.0.jar > app.log 2>&1 &
+        readyTimeout: '20000'
