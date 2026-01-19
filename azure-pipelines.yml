@@ -1,0 +1,25 @@
+
+trigger:
+- none
+
+pool: agent1_pool
+   
+steps: 
+- checkout: self
+  displayName: 'Compile Java Project'
+
+- script: |
+        echo "Current dir:"
+        dir
+        mvn clean package -DskipTests
+        displayName: "Maven Build"
+
+ 
+
+- script: mvn package
+  displayName: 'Build JAR'
+
+- script: |
+    echo "Running Application"
+    java -jar target/javanetflixclone-1.0.jar
+  displayName: 'Run Application' 
