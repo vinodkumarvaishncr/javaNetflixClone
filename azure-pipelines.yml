@@ -1,18 +1,18 @@
-
 trigger:
 - none
 
 pool: agent1_pool
-   
+
 steps:
 - checkout: self
+
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
     goals: 'clean package'
     options: '-DskipTests'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '11'
+    javaHomeOption: 'Path'
+    jdkDirectory: '$(JAVA_HOME)'
   displayName: 'Maven Build'
 
 - script: |
