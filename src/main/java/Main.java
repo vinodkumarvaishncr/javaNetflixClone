@@ -1,23 +1,19 @@
-import java.util.Scanner;
-
+import com.sun.net.httpserver.HttpServer;
+import java.net.InetSocketAddress;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
-        // Detect CI/CD environment
-        if (System.getenv("CI") != null) {
-            System.out.println("Running in CI mode");
-            System.out.println("Netflix Clone build successful");
-            return;
-        }
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
-        // Normal local execution
-        System.out.println("=== Netflix Clone ===");
-        Scanner sc = new Scanner(System.in);
+        server.createContext("/", exchange -> {
+            String response = "Netflix Clone Running on Azure VM";
+            exchange.sendResponseHeaders(200, response.length());
+            exchange.getResponseBody().write(response.getBytes());
+            exchange.close();
+        });
 
-        System.out.print("Enter username: ");
-        String user = sc.next();
-
-        System.out.println("Welcome " + user);
+        server.start();
+        System.out.println("Server started on port 8080");
     }
 }
