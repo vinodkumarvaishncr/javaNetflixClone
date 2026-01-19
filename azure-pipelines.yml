@@ -11,11 +11,11 @@ steps:
     mavenPomFile: 'pom.xml'
     goals: 'clean package'
     options: '-DskipTests'
-    javaHomeOption: 'Path'
-    jdkDirectory: '$(JAVA_HOME)'
   displayName: 'Maven Build'
 
 - script: |
-    echo "Running Application"
+    echo Java version:
+    java -version
+    echo Running application
     java -jar target/netflixclone-1.0.jar
   displayName: 'Run Application'
