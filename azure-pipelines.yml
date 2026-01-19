@@ -41,3 +41,5 @@ steps:
     dir target
     java -jar target/netflixclone-1.0.jar
   displayName: 'Run Application'
+  env:
+    CI: true
